@@ -1,0 +1,304 @@
+<h4 class="resources-signpost" style="margin-bottom: 1rem;"><img
+    class="img-fluid" style="vertical-align: middle; margin-right: 0.5rem;"
+    src="/theme/latrobe/assets/2023/SVG/resources.svg" alt="" width="50"
+    height="50">Lab: Deploy the Web Application to AWS EC2</h4>
+<div
+  style="max-width: 980px; margin: 0 auto; color: #242424; font-family: Arial, Helvetica, sans-serif; line-height: 1.65;">
+  <p>In this lab, you will deploy the supplied Week 10 Express web application
+    to an Ubuntu virtual machine on <strong>Amazon EC2</strong>. You will start
+    an AWS Academy lab session, launch an Ubuntu EC2 instance, configure the
+    security group, connect to Ubuntu, clone the project from GitHub, run the
+    supplied deployment scripts, and test the public website in a browser.</p>
+  <p><strong>Week 10 code:</strong> <a
+      href="https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-10">https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-10</a>
+  </p>
+  <div class="alert alert-success"
+    style="background-color: #d9ebd0; color: #242424; margin: 1.2rem auto; max-width: 900px;"
+    role="alert">
+    <div class="row">
+      <div class="col-1"> </div>
+      <div class="col-11">
+        <p><strong>What you will deploy</strong></p>
+        <p>The Express application listens privately on
+          <code>127.0.0.1:3000</code>. Ubuntu <strong>systemd</strong> keeps the
+          application running as a service named <code>week10-nodeapp</code>.
+          <strong>Nginx</strong> accepts public HTTP traffic on port
+          <code>80</code> and forwards it to the private application. You do
+          not need to open port <code>3000</code> in the EC2 security group.</p>
+      </div>
+    </div>
+  </div>
+  <h4 style="color: #111827;">1. Start AWS Academy and open AWS</h4>
+  <ol>
+    <li>Sign in to the AWS Academy course provided by the teaching team.</li>
+    <li>Open the required Learner Lab or lab environment.</li>
+    <li>Choose <strong>Start Lab</strong> or the equivalent start button.</li>
+    <li>Wait until the lab status shows that the AWS environment is ready.</li>
+    <li>Open the <strong>AWS Management Console</strong>.</li>
+    <li>Check the <strong>Region</strong> shown in the top-right area of the AWS
+      console and stay in that Region for the whole lab.</li>
+  </ol>
+  <p>AWS Academy environments can restrict services, instance types and
+    connection methods. If the Academy lab gives you a browser-based connection
+    option, you may use that instead of local SSH.</p>
+  <h4 style="color: #111827;">2. Launch an Ubuntu EC2 instance</h4>
+  <ol>
+    <li>In the AWS Management Console, search for <strong>EC2</strong>.</li>
+    <li>Open the EC2 service.</li>
+    <li>Choose <strong>Instances</strong>, then choose
+      <strong>Launch instance</strong>.</li>
+    <li>Use the following settings.</li>
+  </ol>
+  <table class="compare">
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>Use for this lab</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Name</strong></td>
+        <td><code>week10-webapp</code></td>
+      </tr>
+      <tr>
+        <td><strong>AMI</strong></td>
+        <td>A current Ubuntu Server LTS image available in the Academy
+          environment</td>
+      </tr>
+      <tr>
+        <td><strong>Instance type</strong></td>
+        <td>A small instance type permitted by AWS Academy, such as
+          <code>t2.micro</code> or <code>t3.micro</code> if available</td>
+      </tr>
+      <tr>
+        <td><strong>Key pair / connection method</strong></td>
+        <td>Select an existing key pair, create a new key pair if permitted, or
+          use the Academy browser-based connection method</td>
+      </tr>
+    </tbody>
+  </table>
+  <p><strong>Important:</strong> choose <strong>Ubuntu Server LTS</strong>, not
+    Amazon Linux. This lab uses Ubuntu commands such as
+    <code>sudo apt update</code> and <code>sudo apt install</code>.</p>
+  <p>Configure the security group with these inbound rules:</p>
+  <table class="compare">
+    <thead>
+      <tr>
+        <th>Traffic</th>
+        <th>Port</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>SSH</strong></td>
+        <td>22</td>
+        <td>Your current IP address where local SSH is permitted; otherwise use
+          the Academy connection instructions</td>
+      </tr>
+      <tr>
+        <td><strong>HTTP</strong></td>
+        <td>80</td>
+        <td><code>0.0.0.0/0</code> for this public teaching website</td>
+      </tr>
+    </tbody>
+  </table>
+  <p><strong>Do not add an inbound rule for port 3000.</strong> Port
+    <code>3000</code> is only used privately on the EC2 instance.</p>
+  <p>Launch the instance. Wait until the instance state is
+    <strong>Running</strong> and the status checks have passed. Copy and keep
+    the <strong>Public IPv4 address</strong>; you will use it later in the
+    browser.</p>
+  <h4 style="color: #111827;">3. Connect to Ubuntu</h4>
+  <p>Select the instance and choose <strong>Connect</strong>. Use the connection
+    option available in your AWS Academy environment.</p>
+  <p>If you use the browser-based EC2 connection, follow the prompts shown by
+    AWS. If you use SSH from your own computer, copy the exact command shown by
+    the EC2 console. Ubuntu EC2 images normally use the username
+    <code>ubuntu</code>.</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">ssh -i YOUR_KEY_FILE.pem ubuntu@YOUR_PUBLIC_IPV4_ADDRESS</pre>
+  <p>Replace <code>YOUR_KEY_FILE.pem</code> and
+    <code>YOUR_PUBLIC_IPV4_ADDRESS</code> with your own values. The public
+    GitHub repository used in this lab does not require a GitHub username or
+    password to clone.</p>
+  <p>After connecting, confirm that you are on the remote EC2 instance:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">whoami
+hostname</pre>
+  <p>On a standard Ubuntu EC2 instance, <code>whoami</code> should normally
+    return <code>ubuntu</code>.</p>
+  <h4 style="color: #111827;">4. Download the Week 10 project from GitHub</h4>
+  <p>Clone the repository directly to the Ubuntu user's home directory. The
+    service script uses the <code>week10-nodeapp</code> directory where you run
+    it, so make sure you run the commands from inside that directory.</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">sudo apt update
+sudo apt install -y git
+
+cd ~
+git clone https://github.com/CSE3CWA-5006/CSE3CWA-5006-Week-10.git
+cd CSE3CWA-5006-Week-10/week10-nodeapp
+chmod +x deploy/*.sh
+ls</pre>
+  <p>You should see files including <code>package.json</code>,
+    <code>package-lock.json</code>, <code>server.js</code>,
+    <code>.env.example</code> and the <code>deploy</code> directory.</p>
+  <h4 style="color: #111827;">5. Prepare Ubuntu and install dependencies</h4>
+  <p>Run the supplied setup script:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">./deploy/setup_ubuntu_ec2.sh</pre>
+  <p>This script installs <code>ca-certificates</code>, <code>curl</code>,
+    <code>git</code>, <code>nginx</code>, Node.js 24.x from NodeSource, npm
+    dependencies, creates <code>.env</code> from <code>.env.example</code> when
+    required, starts Nginx, and checks JavaScript syntax.</p>
+  <p>Confirm the installed versions:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">node -v
+npm -v
+nginx -v</pre>
+  <p><code>node -v</code> should show a version beginning with
+    <code>v24.</code>.</p>
+  <h4 style="color: #111827;">6. Test the Node.js application privately</h4>
+  <p>Start the application directly before installing it as a service:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">npm start</pre>
+  <p>The application should report that it is listening on
+    <code>http://127.0.0.1:3000</code>.</p>
+  <p>Keep that terminal running. Open a second SSH/browser terminal to the same
+    EC2 instance and run:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">curl http://127.0.0.1:3000/
+curl http://127.0.0.1:3000/api/health
+curl http://127.0.0.1:3000/api/time</pre>
+  <p>The first command should return HTML. The two API commands should return
+    JSON. Return to the terminal running <code>npm start</code> and press
+    <code>Ctrl + C</code>.</p>
+  <h4 style="color: #111827;">7. Run the application as a systemd service</h4>
+  <p>Install and start the supplied service:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">./deploy/install_app_service.sh</pre>
+  <p>The script creates <code>/etc/systemd/system/week10-nodeapp.service</code>,
+    points it at the current <code>week10-nodeapp</code> directory, enables it,
+    restarts it, and prints its status.</p>
+  <p>Verify the service and private endpoint:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">sudo systemctl status week10-nodeapp --no-pager
+curl http://127.0.0.1:3000/api/health</pre>
+  <p>The service status should show <strong>active (running)</strong>, and the
+    curl command should return JSON.</p>
+  <h4 style="color: #111827;">8. Configure Nginx</h4>
+  <p>Install the supplied Nginx reverse proxy configuration:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">./deploy/install_nginx_proxy.sh</pre>
+  <p>The script copies <code>deploy/week10-nodeapp.nginx</code> into Nginx,
+    enables the site, removes the default site, validates the Nginx
+    configuration with <code>sudo nginx -t</code>, and reloads Nginx.</p>
+  <p>Test the complete local web path through Nginx:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">curl http://127.0.0.1/
+curl http://127.0.0.1/api/health
+curl http://127.0.0.1/api/time</pre>
+  <h4 style="color: #111827;">9. Open the public website</h4>
+  <p>Return to the EC2 console and copy the instance's current
+    <strong>Public IPv4 address</strong>. On your own computer, open:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">http://YOUR_PUBLIC_IPV4_ADDRESS
+http://YOUR_PUBLIC_IPV4_ADDRESS/api/health
+http://YOUR_PUBLIC_IPV4_ADDRESS/api/time</pre>
+  <p>Replace <code>YOUR_PUBLIC_IPV4_ADDRESS</code> with the actual address of
+    your EC2 instance.</p>
+  <div class="alert alert-success"
+    style="background-color: #d9ebd0; color: #242424; margin: 1.2rem auto; max-width: 900px;"
+    role="alert">
+    <div class="row">
+      <div class="col-1"> </div>
+      <div class="col-11">
+        <p><strong>Deployment complete</strong></p>
+        <p>If the main page loads and <code>/api/health</code> returns JSON, the
+          Week 10 application is running on AWS EC2 and is publicly accessible
+          through Nginx on port <code>80</code>.</p>
+      </div>
+    </div>
+  </div>
+  <h4 style="color: #111827;">10. Troubleshooting</h4>
+  <p>Check one layer at a time. Do not change several settings at once.</p>
+  <table class="compare">
+    <thead>
+      <tr>
+        <th>Problem</th>
+        <th>Check</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>SSH connection fails</td>
+        <td>Confirm the instance is running, use its current public IPv4
+          address, and check the SSH security-group rule or Academy connection
+          method.</td>
+      </tr>
+      <tr>
+        <td><code>git clone</code> fails</td>
+        <td>Confirm the repository URL and check that the EC2 instance has
+          outbound Internet access. This public repository should not ask for a
+          GitHub password.</td>
+      </tr>
+      <tr>
+        <td>Node.js version is not 24.x</td>
+        <td>Run <code>./deploy/setup_ubuntu_ec2.sh</code> again and check the
+          NodeSource installation output.</td>
+      </tr>
+      <tr>
+        <td>The app does not start with <code>npm start</code></td>
+        <td>Run <code>npm install</code>, then <code>npm run check</code>, and
+          read the error output.</td>
+      </tr>
+      <tr>
+        <td>The service is not running</td>
+        <td>Run <code>sudo systemctl status week10-nodeapp --no-pager</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>You need application logs</td>
+        <td>Run <code>sudo journalctl -u week10-nodeapp -n 50 --no-pager</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>Browser shows 502 Bad Gateway</td>
+        <td>Check the application service and confirm that <code>curl
+            http://127.0.0.1:3000/api/health</code> succeeds.</td>
+      </tr>
+      <tr>
+        <td>Nginx configuration fails</td>
+        <td>Run <code>sudo nginx -t</code> and read the reported error.</td>
+      </tr>
+      <tr>
+        <td>Local curl works but the browser times out</td>
+        <td>Check the public IPv4 address and confirm that the EC2 security
+          group allows inbound TCP port <code>80</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+  <h4 style="color: #111827;">11. Evidence and cleanup</h4>
+  <p>Before ending the lab, capture evidence showing:</p>
+  <ul>
+    <li>the EC2 instance running in the AWS console;</li>
+    <li><code>sudo systemctl status week10-nodeapp --no-pager</code> showing
+      <strong>active (running)</strong>;</li>
+    <li><code>sudo nginx -t</code> reporting a successful configuration test;
+    </li>
+    <li>the Week 10 application open in your browser; and</li>
+    <li><code>/api/health</code> returning a successful JSON response.</li>
+  </ul>
+  <p>Remove the Week 10 application service and Nginx site configuration:</p>
+  <pre class="code-window"
+    style="background: #0b1220; color: #d7e3f4; font-family: Consolas,'Courier New',monospace; font-size: 0.88rem; line-height: 1.6; padding: 1rem 1.2rem; border-radius: 10px; overflow-x: auto; margin: 1rem 0 1.5rem; border: 1px solid #24324a; white-space: pre; display: block;">./deploy/cleanup_lab.sh</pre>
+  <p>Finally, stop or terminate the EC2 instance according to the AWS Academy
+    instructions. Do not leave teaching resources running unnecessarily.</p>
+  <p>This lab intentionally uses HTTP for a controlled teaching deployment. A
+    production Internet-facing application would normally require additional
+    controls such as HTTPS, domain configuration, stronger access restrictions,
+    production secrets management, monitoring, backup and an architecture
+    appropriate to the workload.</p>
+</div>

@@ -53,7 +53,7 @@ In the AWS Management Console:
 | Name | `week10-webapp` |
 | AMI | A current Ubuntu Server LTS image available in the Academy environment |
 | Instance type | A small instance type permitted by AWS Academy |
-| Key pair / connection method | Use the method provided or permitted by the Academy lab |
+| Key pair | Select the key pair already provided by the Academy lab (commonly `vockey`). You do not download or use a key file in this lab |
 
 Important: choose Ubuntu Server LTS, not Amazon Linux. This lab uses Ubuntu commands such as `sudo apt update` and `sudo apt install`.
 
@@ -61,24 +61,25 @@ Configure the security group:
 
 | Traffic | Port | Source |
 | --- | --- | --- |
-| SSH | `22` | Your current IP address where local SSH is permitted; otherwise follow the Academy connection instructions |
+| SSH | `22` | `0.0.0.0/0` - the console's browser-based connection arrives from AWS infrastructure, not from your own computer |
 | HTTP | `80` | `0.0.0.0/0` for this public teaching website |
 
 Do not add an inbound rule for port `3000`. The Express app listens privately on the EC2 instance, and Nginx is the public entry point.
 
+Opening port `22` and port `80` to the Internet is acceptable only because this is a short teaching lab on a throwaway instance. A production system would restrict SSH to known addresses or to AWS Systems Manager Session Manager, and would terminate HTTPS in front of the application.
+
 Launch the instance. Wait until it is `Running` and the status checks have passed. Record the instance's Public IPv4 address.
 
-## 3. Connect to Ubuntu
+## 3. Connect to Ubuntu from the AWS Console
 
-Select your instance and choose `Connect`. Use the SSH or browser-based connection method available in your AWS Academy environment.
+Every step of this lab, including connecting to the instance, is done in the AWS Management Console in your browser. You do not install an SSH client, you do not download a key file (`.pem`), and nothing depends on whether your own computer runs Windows, macOS or Linux.
 
-If you use SSH from your own computer, copy the SSH command shown by the EC2 console. Ubuntu EC2 images normally use the username `ubuntu`.
+1. In the EC2 console choose `Instances` and select the `week10-webapp` instance.
+2. Choose `Connect`.
+3. Choose the `EC2 Instance Connect` (browser-based) tab.
+4. Leave the user name as `ubuntu` and choose `Connect`.
 
-Example:
-
-```bash
-ssh -i YOUR_KEY_FILE.pem ubuntu@YOUR_PUBLIC_IPV4_ADDRESS
-```
+A terminal opens in a new browser tab with you logged in as `ubuntu`. If the `Connect` button is not usable yet, the instance is still starting: wait for the status checks to pass and try again. If your Academy environment offers a different browser-based connection option, use that one instead.
 
 After connecting, confirm that you are on the remote EC2 instance:
 
@@ -157,7 +158,7 @@ The application should report:
 Week 10 AWS Node App listening on http://127.0.0.1:3000
 ```
 
-Keep that terminal running and open a second SSH connection to the same EC2 instance. Run:
+Keep that terminal running and open a second browser terminal to the same EC2 instance (in the EC2 console choose `Connect` again). Run:
 
 ```bash
 curl http://127.0.0.1:3000/api/health
@@ -221,7 +222,7 @@ curl http://127.0.0.1/api/time
 
 Return to the EC2 console and copy the instance's current Public IPv4 address.
 
-On your own computer, open:
+Open a normal browser tab (on any computer or device) and go to:
 
 ```text
 http://YOUR_PUBLIC_IPV4_ADDRESS
@@ -239,7 +240,7 @@ Check one layer at a time.
 
 | Problem | Check |
 | --- | --- |
-| SSH connection fails | Confirm the instance is running, use its current public IPv4 address, and check the SSH security-group rule or Academy connection method. |
+| The console connection fails | Confirm the instance is running and its status checks have passed, confirm the security group allows inbound TCP port `22`, then choose `Connect` again. |
 | `git clone` fails | Confirm the repository URL and check that the EC2 instance has outbound Internet access. |
 | Setup script fails during Node.js installation | Confirm the instance is Ubuntu, has outbound Internet access, and can reach NodeSource. |
 | The app does not start with `npm start` | Run `npm install`, then `npm run check`, and read the error output. |
